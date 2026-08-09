@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AquaTrack — Citizen Dashboard · Windhoek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#170f1e;
+    --dusk:#2b1830;
+    --dusk2:#432142;
+    --horizon:#8a3a3f;
+    --terracotta:#e0813f;
+    --amber:#ffb454;
+    --acacia:#93a86a;
+    --foam:#f7ede0;
+    --muted:#b19dbd;
+    --glass-bg:rgba(255,222,180,0.045);
+    --glass-border:rgba(255,222,180,0.14);
+    --danger:#ff6b5b;
+    --pending:#ffb454;
+    --progress:#5ab4d6;
+    --resolved:#93a86a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;background:var(--night);color:var(--foam);font-family:'Inter',sans-serif;overflow-x:hidden;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:inherit;}
+
+  /* ---------- background ---------- */
+  .depth-bg{
+    position:fixed;inset:0;z-index:0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(224,129,63,0.14), transparent 60%),
+      linear-gradient(180deg, #170f1e 0%, #2b1830 55%, #432142 100%);
+  }
+
+  /* ---------- header ---------- */
+  header{
+    position:relative;z-index:6;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:22px 5vw;
+    border-bottom:1px solid rgba(255,222,180,0.08);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:17px;letter-spacing:0.03em;}
+  .brand svg{width:22px;height:22px;}
+  .brand .sep{color:var(--muted);font-weight:400;font-size:13px;margin-left:2px;}
+
+  .header-right{display:flex;align-items:center;gap:14px;}
+  .clock{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--amber);
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    border-radius:999px;
+    padding:8px 14px;
+    letter-spacing:0.05em;
+    display:flex;align-items:center;gap:8px;
+  }
+  .clock .dot{width:6px;height:6px;border-radius:50%;background:var(--acacia);animation:blink 2s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.25;}}
+
+  .btn-pill{
+    display:inline-flex;align-items:center;gap:7px;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
+    color:var(--muted);text-decoration:none;
+    border:1px solid var(--glass-border);background:var(--glass-bg);
+    border-radius:999px;padding:9px 16px;
+    transition:border-color .25s ease,color .25s ease,background .25s ease,transform .2s ease;
+  }
+  .btn-pill:hover{color:var(--amber);border-color:rgba(255,180,84,0.5);background:rgba(255,180,84,0.08);transform:translateY(-1px);}
+
+  /* ---------- hero skyline ---------- */
+  .hero{
+    position:relative;z-index:3;
+    height:230px;
+    overflow:hidden;
+    border-bottom:1px solid rgba(255,222,180,0.08);
+  }
+  .hero-content{
+    position:relative;z-index:4;
+    height:100%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+  }
+  .hero .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.24em;color:var(--amber);text-transform:uppercase;margin-bottom:10px;}
+  .hero h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,4vw,42px);font-weight:700;}
+  .hero p{font-size:13px;color:var(--muted);margin-top:8px;}
+
+  .skyline{position:absolute;bottom:0;left:0;width:100%;height:100%;z-index:2;}
+  .hill{position:absolute;bottom:0;width:100%;fill:#1c1224;}
+  .hill.back{opacity:0.55;}
+  .hill.front{opacity:0.9;}
+  .twinkle{position:absolute;border-radius:50%;background:var(--amber);animation:twinkle ease-in-out infinite;}
+  @keyframes twinkle{0%,100%{opacity:0.15;}50%{opacity:0.9;}}
+
+  .church{position:absolute;bottom:26%;left:50%;transform:translateX(-50%);z-index:3;opacity:0.85;}
+
+  /* ---------- layout ---------- */
+  main{position:relative;z-index:3;max-width:1200px;margin:0 auto;padding:34px 5vw 60px;}
+
+  .stats{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:30px;
+  }
+  @media (max-width:820px){.stats{grid-template-columns:repeat(2,1fr);}}
+  .stat{
+    background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;
+    padding:18px 20px;
+  }
+  .stat .label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
+  .stat .value{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;}
+  .stat .value.amber{color:var(--amber);}
+  .stat .value.acacia{color:var(--acacia);}
+  .stat .live-tag{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;color:var(--acacia);font-family:'IBM Plex Mono',monospace;letter-spacing:0.08em;margin-top:6px;text-transform:uppercase;}
+  .stat .live-tag .dot{width:5px;height:5px;border-radius:50%;background:var(--acacia);animation:blink 1.6s ease-in-out infinite;}
+
+  .grid{display:grid;grid-template-columns:1.15fr 0.85fr;gap:22px;}
+  @media (max-width:980px){.grid{grid-template-columns:1fr;}}
+
+  .panel{
+    background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:16px;
+    padding:24px 24px 22px;position:relative;
+  }
+  .panel h2{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;margin-bottom:4px;}
+  .panel .desc{font-size:12px;color:var(--muted);margin-bottom:18px;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .live-badge{display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--acacia);text-transform:uppercase;}
+  .live-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--acacia);animation:blink 1.6s ease-in-out infinite;}
+
+  /* ---------- radar map ---------- */
+  .radar-wrap{display:flex;justify-content:center;padding:10px 0 6px;}
+  .radar{
+    position:relative;width:290px;height:290px;border-radius:50%;
+    background:radial-gradient(circle, rgba(255,180,84,0.05) 0%, rgba(255,180,84,0.02) 60%, transparent 70%);
+    border:1px solid rgba(255,222,180,0.12);
+  }
+  .radar::before,.radar::after{
+    content:"";position:absolute;border:1px solid rgba(255,222,180,0.1);border-radius:50%;
+  }
+  .radar::before{inset:22%;}
+  .radar::after{inset:44%;}
+  .radar .sweep{
+    position:absolute;inset:0;border-radius:50%;
+    background:conic-gradient(from 0deg, rgba(255,180,84,0.35), transparent 35%);
+    animation:spin 5s linear infinite;
+    mix-blend-mode:screen;
+  }
+  @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+  .radar .center{
+    position:absolute;top:50%;left:50%;width:8px;height:8px;margin:-4px;border-radius:50%;
+    background:var(--foam);box-shadow:0 0 10px rgba(247,237,224,0.7);
+  }
+  .blip{position:absolute;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%);}
+  .blip::after{
+    content:"";position:absolute;inset:-8px;border-radius:50%;
+    animation:pulse 2.4s ease-out infinite;
+  }
+  .blip.critical{background:var(--danger);}
+  .blip.critical::after{box-shadow:0 0 0 0 rgba(255,107,91,0.5);animation-name:pulse-r;}
+  .blip.warn{background:var(--amber);}
+  .blip.warn::after{box-shadow:0 0 0 0 rgba(255,180,84,0.5);animation-name:pulse-a;}
+  .blip.ok{background:var(--acacia);}
+  .blip.ok::after{box-shadow:0 0 0 0 rgba(147,168,106,0.5);animation-name:pulse-g;}
+  @keyframes pulse-r{0%{box-shadow:0 0 0 0 rgba(255,107,91,0.5);}100%{box-shadow:0 0 0 16px rgba(255,107,91,0);}}
+  @keyframes pulse-a{0%{box-shadow:0 0 0 0 rgba(255,180,84,0.5);}100%{box-shadow:0 0 0 16px rgba(255,180,84,0);}}
+  @keyframes pulse-g{0%{box-shadow:0 0 0 0 rgba(147,168,106,0.5);}100%{box-shadow:0 0 0 16px rgba(147,168,106,0);}}
+  .blip-label{
+    position:absolute;transform:translate(-50%,6px);
+    font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);white-space:nowrap;
+  }
+
+  .legend{display:flex;gap:16px;justify-content:center;margin-top:14px;flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
+  .legend .sw{width:8px;height:8px;border-radius:50%;}
+
+  .areas{margin-top:18px;display:flex;flex-direction:column;gap:8px;}
+  .area-row{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;padding:8px 12px;border-radius:8px;background:rgba(255,222,180,0.03);}
+  .area-row .name{display:flex;align-items:center;gap:8px;}
+  .area-row .sw{width:7px;height:7px;border-radius:50%;}
+  .area-row .count{font-family:'IBM Plex Mono',monospace;color:var(--muted);}
+
+  /* ---------- report form ---------- */
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:7px;}
+  .field input,.field select,.field textarea{
+    width:100%;background:rgba(23,15,30,0.55);border:1px solid var(--glass-border);border-radius:8px;
+    padding:11px 13px;color:var(--foam);font-family:'Inter',sans-serif;font-size:13.5px;outline:none;
+    transition:border-color .25s ease,background .25s ease;
+  }
+  .field textarea{resize:vertical;min-height:64px;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--amber);background:rgba(255,180,84,0.06);}
+  .field input::placeholder,.field textarea::placeholder{color:rgba(177,157,189,0.55);}
+
+  button.submit{
+    width:100%;background:linear-gradient(180deg,var(--terracotta),#a85a2c);
+    border:1px solid rgba(255,180,84,0.4);color:var(--foam);
+    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;
+    padding:12px;border-radius:8px;cursor:pointer;margin-top:4px;
+    transition:transform .2s ease,box-shadow .3s ease;
+  }
+  button.submit:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(224,129,63,0.25);}
+
+  .toast{
+    margin-top:12px;padding:10px 13px;border-radius:8px;
+    background:rgba(147,168,106,0.12);border:1px solid rgba(147,168,106,0.35);
+    color:var(--acacia);font-size:12.5px;font-family:'IBM Plex Mono',monospace;
+    display:none;align-items:center;gap:8px;
+  }
+  .toast.show{display:flex;}
+
+  /* ---------- ticker ---------- */
+  .ticker{display:flex;flex-direction:column;gap:10px;max-height:230px;overflow:hidden;}
+  .ticker-item{
+    display:flex;gap:10px;font-size:12.5px;padding:9px 11px;border-radius:8px;
+    background:rgba(255,222,180,0.03);border:1px solid rgba(255,222,180,0.06);
+    animation:fadein .5s ease;
+  }
+  @keyframes fadein{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+  .ticker-item .tdot{width:7px;height:7px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+  .ticker-item .ttext{color:var(--foam);}
+  .ticker-item .ttime{color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:10.5px;display:block;margin-top:2px;}
+
+  /* ---------- my reports ---------- */
+  .reports-panel{margin-top:22px;}
+  .report-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 16px;border-radius:10px;background:rgba(255,222,180,0.03);
+    border:1px solid rgba(255,222,180,0.06);margin-bottom:10px;
+  }
+  .report-row .info .title{font-size:13.5px;font-weight:500;}
+  .report-row .info .meta{font-size:11px;color:var(--muted);margin-top:3px;font-family:'IBM Plex Mono',monospace;}
+  .badge{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
+    padding:5px 11px;border-radius:999px;white-space:nowrap;transition:all .4s ease;
+  }
+  .badge.pending{color:var(--pending);background:rgba(255,180,84,0.12);border:1px solid rgba(255,180,84,0.35);}
+  .badge.progress{color:var(--progress);background:rgba(90,180,214,0.12);border:1px solid rgba(90,180,214,0.35);}
+  .badge.resolved{color:var(--resolved);background:rgba(147,168,106,0.12);border:1px solid rgba(147,168,106,0.35);}
+
+  footer{position:relative;z-index:3;text-align:center;padding:24px 6vw 40px;border-top:1px solid rgba(255,222,180,0.08);}
+  footer .line1{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.05em;}
+
+  @media (prefers-reduced-motion: reduce){
+    .sweep,.blip::after,.clock .dot,.live-badge .dot,.twinkle{animation:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="depth-bg"></div>
+
+<header>
+  <a class="brand" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C12 2 5 11 5 15.5C5 19.09 8.13 22 12 22C15.87 22 19 19.09 19 15.5C19 11 12 2 12 2Z" stroke="#e0813f" stroke-width="1.6" stroke-linejoin="round"/>
+    </svg>
+    AQUATRACK <span class="sep">/ Citizen</span>
+  </a>
+  <div class="header-right">
+    <div class="clock mono"><span class="dot"></span><span id="clockText">--:--:--</span> · Windhoek</div>
+    <a class="btn-pill" href="index.html">← Home</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="skyline">
+    <svg class="hill back" viewBox="0 0 1200 200" preserveAspectRatio="none">
+      <path d="M0,140 L60,120 130,150 220,100 320,145 420,110 520,150 610,120 700,150 800,105 900,145 1000,115 1100,150 1200,130 L1200,200 L0,200 Z"/>
+    </svg>
+    <svg class="hill front" viewBox="0 0 1200 200" preserveAspectRatio="none">
+      <path d="M0,170 L80,150 160,175 260,140 360,172 460,150 560,178 660,145 760,175 860,150 960,178 1060,155 1160,175 1200,165 L1200,200 L0,200 Z"/>
+    </svg>
+    <svg class="church" width="34" height="70" viewBox="0 0 34 70">
+      <path d="M17 0 L21 12 L13 12 Z" fill="#1c1224"/>
+      <rect x="14" y="12" width="6" height="10" fill="#1c1224"/>
+      <path d="M6 22 L28 22 L26 70 L8 70 Z" fill="#1c1224"/>
+      <rect x="15" y="40" width="4" height="12" fill="#2b1830"/>
+    </svg>
+  </div>
+  <div class="hero-content">
+    <div class="eyebrow mono">Windhoek · Live City Feed</div>
+    <h1>Citizen Dashboard</h1>
+    <p>Report issues, track their status, and see what's happening across the city right now.</p>
+  </div>
+</section>
+
+<main>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label mono">Active Reports Nearby</div>
+      <div class="value amber" id="statActive">14</div>
+      <div class="live-tag"><span class="dot"></span>Live</div>
+    </div>
+    <div class="stat">
+      <div class="label mono">Resolved This Week</div>
+      <div class="value acacia">38</div>
+    </div>
+    <div class="stat">
+      <div class="label mono">Your Reports</div>
+      <div class="value">3</div>
+    </div>
+    <div class="stat">
+      <div class="label mono">City Supply Status</div>
+      <div class="value acacia" style="font-size:20px;">Stable</div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Windhoek Live Map</h2>
+        <span class="live-badge"><span class="dot"></span>Live</span>
+      </div>
+      <p class="desc">Reported issues by suburb, updating in real time.</p>
+
+      <div class="radar-wrap">
+        <div class="radar">
+          <div class="sweep"></div>
+          <div class="center"></div>
+
+          <div class="blip critical" style="top:28%;left:52%;"></div>
+          <div class="blip-label" style="top:28%;left:52%;">Katutura</div>
+
+          <div class="blip warn" style="top:62%;left:70%;"></div>
+          <div class="blip-label" style="top:62%;left:70%;">Khomasdal</div>
+
+          <div class="blip ok" style="top:70%;left:38%;"></div>
+          <div class="blip-label" style="top:70%;left:38%;">Klein Windhoek</div>
+
+          <div class="blip ok" style="top:40%;left:22%;"></div>
+          <div class="blip-label" style="top:40%;left:22%;">Olympia</div>
+
+          <div class="blip warn" style="top:22%;left:72%;"></div>
+          <div class="blip-label" style="top:22%;left:72%;">Eros</div>
+
+          <div class="blip ok" style="top:78%;left:60%;"></div>
+          <div class="blip-label" style="top:78%;left:60%;">Pioneers Park</div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span><span class="sw" style="background:var(--danger);"></span>Critical</span>
+        <span><span class="sw" style="background:var(--amber);"></span>Suspected</span>
+        <span><span class="sw" style="background:var(--acacia);"></span>Resolved / Low</span>
+      </div>
+
+      <div class="areas">
+        <div class="area-row"><span class="name"><span class="sw" style="background:var(--danger);"></span>Katutura</span><span class="count mono">17 reports</span></div>
+        <div class="area-row"><span class="name"><span class="sw" style="background:var(--amber);"></span>Khomasdal</span><span class="count mono">11 reports</span></div>
+        <div class="area-row"><span class="name"><span class="sw" style="background:var(--amber);"></span>Eros</span><span class="count mono">6 reports</span></div>
+        <div class="area-row"><span class="name"><span class="sw" style="background:var(--acacia);"></span>Klein Windhoek</span><span class="count mono">5 reports</span></div>
+        <div class="area-row"><span class="name"><span class="sw" style="background:var(--acacia);"></span>Pioneers Park</span><span class="count mono">4 reports</span></div>
+        <div class="area-row"><span class="name"><span class="sw" style="background:var(--acacia);"></span>Olympia</span><span class="count mono">2 reports</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2>Report a Problem</h2>
+        <p class="desc">Leak, outage, or low pressure — let the city know.</p>
+        <form id="reportForm" onsubmit="return false;">
+          <div class="field">
+            <label>Issue type</label>
+            <select id="issueType">
+              <option>Pipe leak</option>
+              <option>Water outage</option>
+              <option>Low pressure</option>
+              <option>Contaminated water</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Location / suburb</label>
+            <input type="text" placeholder="e.g. Katutura, Independence Ave">
+          </div>
+          <div class="field">
+            <label>Description</label>
+            <textarea placeholder="Briefly describe what you're seeing..."></textarea>
+          </div>
+          <div class="field">
+            <label>Photo</label>
+            <input type="file" accept="image/*">
+          </div>
+          <button class="submit" type="submit" id="submitBtn">Submit Report</button>
+          <div class="toast mono" id="toast">✓ Report submitted — you'll see it under "My Reports"</div>
+        </form>
+      </div>
+
+      <div class="panel" style="margin-top:22px;">
+        <div class="panel-head">
+          <h2>City Activity</h2>
+          <span class="live-badge"><span class="dot"></span>Live</span>
+        </div>
+        <p class="desc">Recent reports from across Windhoek.</p>
+        <div class="ticker" id="ticker"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel reports-panel">
+    <h2>My Reports</h2>
+    <p class="desc">Status of issues you've submitted.</p>
+
+    <div class="report-row">
+      <div class="info">
+        <div class="title">Pipe leak — Independence Ave, Katutura</div>
+        <div class="meta">Reported 3 hours ago</div>
+      </div>
+      <span class="badge pending" id="badge1">Pending</span>
+    </div>
+
+    <div class="report-row">
+      <div class="info">
+        <div class="title">Low pressure — 7th Street, Klein Windhoek</div>
+        <div class="meta">Reported 1 day ago</div>
+      </div>
+      <span class="badge progress">In Progress</span>
+    </div>
+
+    <div class="report-row">
+      <div class="info">
+        <div class="title">Water outage — Suiderhof</div>
+        <div class="meta">Reported 4 days ago</div>
+      </div>
+      <span class="badge resolved">Resolved</span>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="line1">AQUATRACK — Managing water for a prosperous future · Phillipus Kamati, NUST Computer Science</div>
+</footer>
+
+<script>
+  // live clock — Windhoek time
+  function tickClock(){
+    const el = document.getElementById('clockText');
+    const now = new Date();
+    const opts = {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Africa/Windhoek'};
+    el.textContent = now.toLocaleTimeString('en-GB', opts);
+  }
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  // twinkling hillside lights
+  const skyline = document.querySelector('.skyline');
+  for(let i=0;i<26;i++){
+    const t = document.createElement('div');
+    t.className = 'twinkle';
+    const size = 1.5 + Math.random()*2;
+    t.style.width = size+'px';
+    t.style.height = size+'px';
+    t.style.left = (Math.random()*100)+'%';
+    t.style.bottom = (8 + Math.random()*30)+'%';
+    t.style.animationDuration = (2 + Math.random()*3)+'s';
+    t.style.animationDelay = (Math.random()*4)+'s';
+    skyline.appendChild(t);
+  }
+
+  // live activity ticker
+  const feedPool = [
+    {area:'Katutura', text:'Pipe burst reported', level:'danger'},
+    {area:'Khomasdal', text:'Water outage confirmed', level:'warn'},
+    {area:'Klein Windhoek', text:'Leak resolved', level:'ok'},
+    {area:'Olympia', text:'Low pressure reported', level:'warn'},
+    {area:'Eros', text:'New report submitted', level:'warn'},
+    {area:'Pioneers Park', text:'Maintenance team dispatched', level:'ok'},
+    {area:'Suiderhof', text:'Issue marked resolved', level:'ok'},
+    {area:'Windhoek West', text:'Suspected contamination flagged', level:'danger'},
+  ];
+  const colorMap = {danger:'var(--danger)', warn:'var(--amber)', ok:'var(--acacia)'};
+  const ticker = document.getElementById('ticker');
+
+  function addTickerItem(){
+    const item = feedPool[Math.floor(Math.random()*feedPool.length)];
+    const row = document.createElement('div');
+    row.className = 'ticker-item';
+    row.innerHTML = `<span class="tdot" style="background:${colorMap[item.level]}"></span>
+      <span><span class="ttext">${item.text} — ${item.area}</span><span class="ttime">Just now</span></span>`;
+    ticker.prepend(row);
+    while(ticker.children.length > 6){ ticker.removeChild(ticker.lastChild); }
+
+    const activeStat = document.getElementById('statActive');
+    let val = parseInt(activeStat.textContent, 10);
+    activeStat.textContent = Math.max(1, val + (Math.random() > 0.5 ? 1 : -1));
+  }
+  addTickerItem();
+  setInterval(addTickerItem, 6000);
+
+  // report form demo submit
+  document.getElementById('reportForm').addEventListener('submit', function(){
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(()=> toast.classList.remove('show'), 4000);
+  });
+
+  // simulate a status update on "My Reports" to show live behaviour
+  setTimeout(()=>{
+    const badge = document.getElementById('badge1');
+    badge.textContent = 'In Progress';
+    badge.className = 'badge progress';
+  }, 9000);
+</script>
+
+</body>
+</html>

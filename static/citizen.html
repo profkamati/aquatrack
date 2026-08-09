@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AquaTrack — Citizen Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --abyss:#040f1a;
+    --deep:#0a2942;
+    --panel:#0d3350;
+    --current:#146c94;
+    --tide:#3fd0e0;
+    --foam:#eaf6fb;
+    --muted:#7fa6bd;
+    --glass-bg:rgba(255,255,255,0.045);
+    --glass-border:rgba(255,255,255,0.12);
+    --err:#ff8a80;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;background:var(--abyss);color:var(--foam);font-family:'Inter',sans-serif;overflow-x:hidden;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  .depth-bg{
+    position:fixed;inset:0;z-index:0;
+    background:
+      radial-gradient(ellipse 90% 60% at 50% -10%, rgba(20,108,148,0.35), transparent 60%),
+      radial-gradient(ellipse 70% 55% at 15% 90%, rgba(63,208,224,0.10), transparent 60%),
+      linear-gradient(180deg, #040f1a 0%, #071c30 45%, #0a2942 100%);
+  }
+
+  .bubble{position:fixed;bottom:-40px;border-radius:50%;background:rgba(234,246,251,0.06);border:1px solid rgba(234,246,251,0.12);animation:rise linear infinite;z-index:1;}
+  @keyframes rise{0%{transform:translateY(0) translateX(0);opacity:0;}10%{opacity:1;}90%{opacity:0.6;}100%{transform:translateY(-110vh) translateX(20px);opacity:0;}}
+
+  header{position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:26px 6vw;}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;letter-spacing:0.04em;color:var(--foam);text-decoration:none;}
+  .brand svg{width:24px;height:24px;}
+  header a.back{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    color:var(--muted);
+    text-decoration:none;
+    text-transform:uppercase;
+    border:1px solid var(--glass-border);
+    background:var(--glass-bg);
+    border-radius:999px;
+    padding:9px 16px;
+    transition:border-color .25s ease, color .25s ease, background .25s ease, transform .2s ease;
+  }
+  header a.back:hover{color:var(--tide);border-color:rgba(63,208,224,0.45);background:rgba(63,208,224,0.08);transform:translateY(-1px);}
+
+  .wrap{position:relative;z-index:5;min-height:calc(100vh - 84px);display:flex;align-items:center;justify-content:center;padding:4vh 6vw 8vh;}
+
+  .login-card{
+    width:100%;max-width:400px;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    border-radius:16px;
+    backdrop-filter:blur(16px);
+    padding:38px 34px 32px;
+    position:relative;
+  }
+  .rivet{position:absolute;width:6px;height:6px;border-radius:50%;background:rgba(234,246,251,0.18);}
+  .rivet.tl{top:14px;left:14px;} .rivet.tr{top:14px;right:14px;}
+  .rivet.bl{bottom:14px;left:14px;} .rivet.br{bottom:14px;right:14px;}
+
+  .icon-badge{
+    width:48px;height:48px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(63,208,224,0.1);
+    border:1px solid rgba(63,208,224,0.25);
+    margin-bottom:20px;
+  }
+  .icon-badge svg{width:24px;height:24px;stroke:var(--tide);}
+
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.16em;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+  h1{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:600;color:var(--foam);margin-bottom:6px;}
+  .sub{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:28px;}
+
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+  .field input{
+    width:100%;
+    background:rgba(4,15,26,0.5);
+    border:1px solid var(--glass-border);
+    border-radius:8px;
+    padding:12px 14px;
+    color:var(--foam);
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    outline:none;
+    transition:border-color .25s ease, background .25s ease;
+  }
+  .field input::placeholder{color:rgba(127,166,189,0.5);}
+  .field input:focus{border-color:var(--tide);background:rgba(63,208,224,0.06);}
+
+  .row-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+  .remember{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);}
+  .remember input{accent-color:var(--tide);}
+  .forgot{font-size:12px;color:var(--tide);text-decoration:none;border-bottom:1px solid rgba(63,208,224,0.35);padding-bottom:2px;}
+
+  button.submit{
+    width:100%;
+    background:linear-gradient(180deg, var(--current), #0d5478);
+    border:1px solid rgba(63,208,224,0.4);
+    color:var(--foam);
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    letter-spacing:0.02em;
+    padding:13px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:transform .2s ease, box-shadow .3s ease;
+  }
+  button.submit:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(63,208,224,0.18);}
+
+  .divider{display:flex;align-items:center;gap:12px;margin:26px 0 20px;}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:rgba(255,255,255,0.08);}
+  .divider span{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
+
+  .foot-note{text-align:center;font-size:12.5px;color:var(--muted);}
+  .foot-note a{color:var(--tide);text-decoration:none;border-bottom:1px solid rgba(63,208,224,0.35);padding-bottom:1px;}
+
+  footer{position:relative;z-index:5;text-align:center;padding:20px 6vw 34px;}
+  footer .line1{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.06em;}
+
+  @media (prefers-reduced-motion: reduce){.bubble{animation:none !important;}}
+</style>
+</head>
+<body>
+
+<div class="depth-bg"></div>
+
+<header>
+  <a class="brand" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C12 2 5 11 5 15.5C5 19.09 8.13 22 12 22C15.87 22 19 19.09 19 15.5C19 11 12 2 12 2Z" stroke="#3fd0e0" stroke-width="1.6" stroke-linejoin="round"/>
+    </svg>
+    AQUATRACK
+  </a>
+  <a class="back" href="index.html">← All Access Points</a>
+</header>
+
+<div class="wrap">
+  <div class="login-card">
+    <span class="rivet tl"></span><span class="rivet tr"></span><span class="rivet bl"></span><span class="rivet br"></span>
+
+    <div class="icon-badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C12 2 6 10 6 14.5C6 17.5 8.7 20 12 20C15.3 20 18 17.5 18 14.5C18 10 12 2 12 2Z"/></svg>
+    </div>
+
+    <div class="tag mono">Access Point 01 · Public</div>
+    <h1 id="formTitle">Citizen Login</h1>
+    <p class="sub" id="formSub">Sign in to report leaks and outages, and track issues near you.</p>
+
+    <form id="loginForm" data-mode="login">
+      <div class="field" id="nameField" style="display:none;">
+        <label>Full name</label>
+        <input type="text" id="fullName" placeholder="e.g. Maria Nghipandulwa" autocomplete="name">
+      </div>
+      <div class="field">
+        <label>Phone number or email</label>
+        <input type="text" id="identifier" placeholder="e.g. 081 234 5678" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="row-between">
+        <label class="remember"><input type="checkbox"> Keep me signed in</label>
+        <a class="forgot" href="#">Forgot password?</a>
+      </div>
+      <div id="formMsg" style="display:none;font-size:12.5px;font-family:'IBM Plex Mono',monospace;margin-bottom:14px;padding:10px 12px;border-radius:8px;"></div>
+      <button class="submit" type="submit" id="submitBtn">Enter Citizen Portal →</button>
+    </form>
+
+    <div class="divider"><span id="dividerText">New here</span></div>
+    <p class="foot-note"><span id="footNoteText">Don't have an account? </span><a href="#" id="toggleMode">Register as a citizen</a></p>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const toggle = document.getElementById('toggleMode');
+  const nameField = document.getElementById('nameField');
+  const formTitle = document.getElementById('formTitle');
+  const formSub = document.getElementById('formSub');
+  const footNoteText = document.getElementById('footNoteText');
+  const dividerText = document.getElementById('dividerText');
+  const submitBtn = document.getElementById('submitBtn');
+  const formMsg = document.getElementById('formMsg');
+
+  toggle.addEventListener('click', function(e){
+    e.preventDefault();
+    const registering = form.dataset.mode === 'login';
+    form.dataset.mode = registering ? 'register' : 'login';
+    nameField.style.display = registering ? 'block' : 'none';
+    formTitle.textContent = registering ? 'Create Citizen Account' : 'Citizen Login';
+    formSub.textContent = registering ? 'Register to start reporting issues near you.' : 'Sign in to report leaks and outages, and track issues near you.';
+    submitBtn.textContent = registering ? 'Create Account →' : 'Enter Citizen Portal →';
+    dividerText.textContent = registering ? 'Already registered' : 'New here';
+    footNoteText.textContent = registering ? 'Already have an account? ' : "Don't have an account? ";
+    toggle.textContent = registering ? 'Sign in' : 'Register as a citizen';
+    formMsg.style.display = 'none';
+  });
+
+  function showMsg(text, ok){
+    formMsg.textContent = text;
+    formMsg.style.display = 'block';
+    formMsg.style.color = ok ? 'var(--tide)' : 'var(--err)';
+    formMsg.style.background = ok ? 'rgba(63,208,224,0.08)' : 'rgba(255,138,128,0.08)';
+    formMsg.style.border = '1px solid ' + (ok ? 'rgba(63,208,224,0.3)' : 'rgba(255,138,128,0.3)');
+  }
+
+  form.addEventListener('submit', async function(e){
+    e.preventDefault();
+    const identifier = document.getElementById('identifier').value.trim();
+    const password = document.getElementById('password').value;
+    const mode = form.dataset.mode;
+
+    if(!identifier || !password){
+      showMsg('Please fill in all fields.', false);
+      return;
+    }
+
+    submitBtn.disabled = true;
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = mode === 'register' ? 'Creating account…' : 'Signing in…';
+
+    try{
+      const endpoint = mode === 'register' ? '/api/register' : '/api/login';
+      const payload = mode === 'register'
+        ? { role: 'citizen', identifier, password, name: document.getElementById('fullName').value.trim() }
+        : { role: 'citizen', identifier, password };
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if(res.ok){
+        showMsg(mode === 'register' ? 'Account created — signing you in…' : 'Signed in — redirecting…', true);
+        setTimeout(()=>{ window.location.href = data.redirect || 'citizen-dashboard.html'; }, 600);
+      } else {
+        showMsg(data.error || 'Something went wrong.', false);
+      }
+    } catch(err){
+      showMsg('Could not reach the server. Is the backend running?', false);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  });
+</script>
+
+<footer>
+  <div class="line1">AQUATRACK — Managing water for a prosperous future · Phillipus Kamati, NUST Computer Science</div>
+</footer>
+
+<script>
+  const bubbleCount = 10;
+  for(let i=0;i<bubbleCount;i++){
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = 4 + Math.random()*10;
+    b.style.width = size+'px';
+    b.style.height = size+'px';
+    b.style.left = (Math.random()*100)+'vw';
+    b.style.animationDuration = (12 + Math.random()*14)+'s';
+    b.style.animationDelay = (Math.random()*10)+'s';
+    document.body.appendChild(b);
+  }
+</script>
+
+</body>
+</html>
